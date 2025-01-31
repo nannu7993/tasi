@@ -22,24 +22,24 @@ def fetch_member_details(detail_url):
         response.raise_for_status()
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # Extract details
-        person_in_charge = soup.find(text="Person in charge:").find_next("td").get_text(strip=True) if soup.find(text="Person in charge:") else None
-        position = soup.find(text="Position:").find_next("td").get_text(strip=True) if soup.find(text="Position:") else None
-        address = soup.find(text="Address:").find_next("td").get_text(strip=True) if soup.find(text="Address:") else None
-        tel = soup.find(text="Tel:").find_next("td").get_text(strip=True) if soup.find(text="Tel:") else None
-        web = soup.find(text="Web:").find_next("td").get_text(strip=True) if soup.find(text="Web:") else None
-        email = soup.find(text="E-mail:").find_next("td").get_text(strip=True) if soup.find(text="E-mail:") else None
+        # Extract the company name or title from the <h1> tag
         title = soup.find("h1").get_text(strip=True) if soup.find("h1") else None
 
-        return {
-            "Title": title,
-            "Person in charge": person_in_charge,
-            "Position": position,
-            "Address": address,
-            "Tel": tel,
-            "Web": web,
-            "E-mail": email,
-        }
+        # Extract information from the <dl> tag
+        dl = soup.find("dl")
+        details = {"Title": title}
+
+        if dl:
+            dt_tags = dl.find_all("dt")  # Find all <dt> tags
+            dd_tags = dl.find_all("dd")  # Find all <dd> tags
+
+            # Ensure that <dt> and <dd> tags are paired correctly
+            for dt, dd in zip(dt_tags, dd_tags):
+                key = dt.get_text(strip=True).replace("：", "").strip()  # Clean up the key
+                value = dd.get_text(strip=True)  # Extract the value
+                details[key] = value
+
+        return details
     except Exception as e:
         st.error(f"Error fetching details from {detail_url}: {e}")
         return None
